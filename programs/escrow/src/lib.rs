@@ -2,7 +2,9 @@ use anchor_lang::prelude::*;
 
 declare_id!("4MgR17BFn1H1PVGm9cNqE4D48MDumf84x6NWEYD6XE12");
 
+//Import module parent folders
 mod state; // imports all modules from state folder ie escrow here
+mod contexts; // imports make and take from contexts
 
 #[program]
 pub mod escrow {

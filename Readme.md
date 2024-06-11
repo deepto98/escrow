@@ -28,4 +28,5 @@ We eill have 3 Instructions:
 3. refund -> the maker, will be able to cancel the escrow if it has not yet
 been taken
 
- 
+ Doubts:
+ seed in escrow - >1 scrow?

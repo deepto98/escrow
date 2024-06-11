@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+// Escrow PDA
 #[account]
 pub struct Escrow {
     pub seed: u64, //to allow user to have more than 1 escrow
