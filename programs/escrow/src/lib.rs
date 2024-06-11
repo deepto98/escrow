@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 
 declare_id!("4MgR17BFn1H1PVGm9cNqE4D48MDumf84x6NWEYD6XE12");
 
-mod state; // use state module
+mod state; // imports all modules from state folder ie escrow here
 
 #[program]
 pub mod escrow {
