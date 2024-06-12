@@ -9,22 +9,32 @@ use crate::state::Escrow;
 #[derive(Accounts)]
 #[instruction(seed:u64)] //seed will be passed from client, we use instruction to use it within context
 pub struct Make<'info> {
-    #[account(mut)]
+    #[account(mut)] //mut because maker  (is payer) for initializing the account - sol change
     pub maker: Signer<'info>, //person initializing escrow and paying fees and signing SPL tokens, has to be a signer
-    pub mint_a: Account<'info, Mint>, //derive PDAs
-    pub mint_b: Account<'info, Mint>,
+
+    pub mint_a: Account<'info, Mint>, //derive PDAs. to be stored in escrow
+    pub mint_b: Account<'info, Mint>, //to be stored in escrow
+
     #[account(
         init,
         payer = maker,
-        seeds = [b"escrow", maker.key.as_ref, seed.to_le_bytes().as_ref()], // by passing seed, we allow multiple escrows per user
-        bump,
-        space = Escrow::INIT_SPACE
+        // Seeds - if we only used [b"escrow", maker.key.as_ref], only one escrow would be possible
+        // as all PDAs derived used the seed would be the same
+        // by passing seed, we allow multiple escrows per user. seed is fetched from instruction macro here
+        seeds = [b"escrow", maker.key.as_ref, seed.to_le_bytes().as_ref()],
+        bump, //initialize with canonical bump
+        space = Escrow::INIT_SPACE //Space is what the payer pays
     )]
     pub escrow: Account<'info, Escrow>,
-    // ATAs - maker and vault
-    #[account(
-        mut,
-        associated_token :: mint = mint_a,
+
+    // ATAs required - maker and vault
+
+    // Maker ATA - Tokens from Mint A will be transferred from Maker ATA to the vault
+    // An ATA is derived from a wallet address(maker) and a mint address (mint_a)
+    #[account( 
+        //no init because maker_ata should already exist 
+        mut, //mut since we transfer tokens from the ata 
+        associated_token :: mint = mint_a, //ensuring ata is derived from Mint A
         associated_token :: authority = maker,//checks if ata is derived from maker address
     )]
     pub maker_ata: Account<'info, TokenAccount>,
@@ -44,9 +54,9 @@ pub struct Make<'info> {
 }
 
 impl<'info> Make<'info> {
-    // Initialize state of escrow and associated
+    // Initialize rules of escrow
     pub fn init(&mut self, seed: u64, receive: u64, bumps: &MakeBumps) -> Result<()> {
-        // set_inner helps us init the Escrow account struct
+        // set_inner helps us init the inner account of the Escrow. 
         self.escrow.set_inner(Escrow {
             seed,
             maker: self.maker.key(),
@@ -60,14 +70,14 @@ impl<'info> Make<'info> {
 
     // Function for maker to deposit
     pub fn deposit(&mut self, deposit: u64) -> Result<()> {
-        // For transferring sol, SystemProgram is target of CPI
-        // For transferring SPL tokens,TokenProgram is the targeT
+        // For transferring sol, SystemProgram is target of CPI. Because System prog owns system account, which can transfer sol
+        // For transferring SPL tokens,TokenProgram is the target. Because tokens are possesed by ATAs which are owned by Token Program
         let cpi_program = self.token_program.to_account_info();
 
         let cpi_accounts = Transfer {
             from: self.maker_ata.to_account_info(),
             to: self.vault.to_account_info(),
-            authority: self.maker.to_account_info(),
+            authority: self.maker.to_account_info(), //Auth required for ATA to ATA CPI. Auth is of the from acc
         };
 
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
