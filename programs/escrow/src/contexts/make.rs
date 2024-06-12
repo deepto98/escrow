@@ -21,7 +21,7 @@ pub struct Make<'info> {
         // Seeds - if we only used [b"escrow", maker.key.as_ref], only one escrow would be possible
         // as all PDAs derived used the seed would be the same
         // by passing seed, we allow multiple escrows per user. seed is fetched from instruction macro here
-        seeds = [b"escrow", maker.key.as_ref, seed.to_le_bytes().as_ref()],
+        seeds = [b"escrow", maker.key.as_ref(), seed.to_le_bytes().as_ref()],
         bump, //initialize with canonical bump
         space = Escrow::INIT_SPACE //Space is what the payer pays
     )]

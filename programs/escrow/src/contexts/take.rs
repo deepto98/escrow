@@ -24,7 +24,7 @@ pub struct Take<'info> {
 
     #[account(
         mut, //since we'll close it after the txn
-        seeds = [b"escrow", escrow.maker.key.as_ref, escrow.seed.to_le_bytes().as_ref()], // by passing seed, we allow multiple escrows per user. seed is fetched from instruction macro here
+        seeds = [b"escrow", escrow.maker.key().as_ref(), escrow.seed.to_le_bytes().as_ref()], // by passing seed, we allow multiple escrows per user. seed is fetched from instruction macro here
         bump = escrow.bump,
 
         //Checks if these items are already stored in the account struct
@@ -79,19 +79,6 @@ pub struct Take<'info> {
 // 2 .Withdraw from vault, send to taker. mint address : mint_a
 // 3. Close vault
 impl<'info> Take<'info> {
-    // pub fn take(&mut self, seed: u64) -> Result<()> {
-    //     self.escrow.send = send;
-    //     self.vault.amount = send;
-    //     self.taker_ata_a.amount = self.taker_ata_a.amount
-    //         .checked_add(self.escrow.receive)
-    //         .ok_or(ErrorCode::MathError)?;
-
-    //     self.taker_ata_b.amount = self.taker_ata_b.amount
-    //         .checked_add(send)
-    //         .ok_or(ErrorCode::MathError)?;
-    //     Ok(())
-    // }
-
     pub fn deposit(&mut self) -> Result<()> {
         // token program coz spl
         let cpi_program = self.token_program.to_account_info();
@@ -123,7 +110,7 @@ impl<'info> Take<'info> {
         };
 
         // Signer seeds - We need the authority of the program , program signs on behalf of PDA
-        let signer_seeds = [
+        let signer_seeds: [&[&[u8]]; 1] = [
             &[
                 b"escrow",
                 self.maker.to_account_info().key.as_ref(),
@@ -136,6 +123,8 @@ impl<'info> Take<'info> {
         transfer(cpi_ctx, self.vault.amount)?; //we transfer all tokens in vault to taker
 
         // 2. Close Account
+        let cpi_program = self.token_program.to_account_info();
+
         let accounts = CloseAccount {
             account: self.vault.to_account_info(), //account we're closing
             destination: self.taker.to_account_info(), //where rent goes to
@@ -143,7 +132,7 @@ impl<'info> Take<'info> {
         };
 
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, accounts, &signer_seeds);
-        close_account(cpi_ctx);
+        close_account(cpi_ctx)?;
         Ok(())
     }
 }
