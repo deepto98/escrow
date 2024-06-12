@@ -1,4 +1,4 @@
-use anchor_lang::{ prelude::*, solana_program::instruction };
+use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{ transfer, Mint, Token, TokenAccount, Transfer },
@@ -56,7 +56,7 @@ pub struct Make<'info> {
 impl<'info> Make<'info> {
     // Initialize   escrow account with data
     pub fn init(&mut self, seed: u64, receive: u64, bumps: &MakeBumps) -> Result<()> {
-        // set_inner helps us init the inner account of the Escrow. 
+        // set_inner helps us init the inner account of the Escrow.
         self.escrow.set_inner(Escrow {
             seed,
             maker: self.maker.key(),

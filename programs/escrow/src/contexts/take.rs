@@ -1,4 +1,4 @@
-use anchor_lang::{ prelude::*, solana_program::instruction };
+use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token::{ close_account, transfer, CloseAccount, Mint, Token, TokenAccount, Transfer },
